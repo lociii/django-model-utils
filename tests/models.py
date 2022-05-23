@@ -254,7 +254,7 @@ class TrackerTimeStamped(TimeStampedModel):
 
 
 class TrackedFK(models.Model):
-    fk = models.ForeignKey('Tracked', on_delete=models.CASCADE)
+    fk = models.ForeignKey('Tracked', on_delete=models.CASCADE, null=True)
 
     tracker = FieldTracker()
     custom_tracker = FieldTracker(fields=['fk_id'])
