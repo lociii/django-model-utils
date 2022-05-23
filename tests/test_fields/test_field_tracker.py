@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from model_utils import FieldTracker
 from model_utils.tracker import DescriptorWrapper
+from tests import factories
 from tests.models import (
     InheritedModelTracked,
     InheritedTracked,
@@ -542,11 +543,10 @@ class FieldTrackerForeignKeyTests(FieldTrackerTestCase):
 class FieldTrackerPostSaveNullableTests(FieldTrackerTestCase):
 
     fk_class = Tracked
-    tracked_class = TrackedFKNullable
 
     def setUp(self):
         self.old_fk = self.fk_class.objects.create(number=8)
-        self.instance = self.tracked_class.objects.create(fk=self.old_fk)
+        self.instance = factories.TrackedFKNullableFactory(fk=self.old_fk)
 
     @mock.patch("tests.models.TrackedFKNullable.callback")
     def test_empty_default(self, mock_callback):
@@ -567,6 +567,17 @@ class FieldTrackerPostSaveNullableTests(FieldTrackerTestCase):
         self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
         self.instance.fk = None
         self.instance.save(update_fields=["fk"])
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_any_call(name="default", fields={"fk_id": self.old_fk.id})
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_default_update_fields_id(self, mock_callback):
+        self.tracker = self.instance.tracker
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
+        self.instance.fk = None
+        self.instance.save(update_fields=["fk_id"])
         self.assertCurrent(id=self.instance.id, fk_id=None)
         mock_callback.assert_any_call(name="default", fields={"fk_id": self.old_fk.id})
 
@@ -593,6 +604,17 @@ class FieldTrackerPostSaveNullableTests(FieldTrackerTestCase):
         mock_callback.assert_any_call(name="custom_tracker", fields={"fk_id": self.old_fk.id})
 
     @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_custom_update_fields_id(self, mock_callback):
+        self.tracker = self.instance.custom_tracker
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(fk_id=self.old_fk.id)
+        self.instance.fk = None
+        self.instance.save(update_fields=["fk_id"])
+        self.assertCurrent(fk_id=None)
+        mock_callback.assert_any_call(name="custom_tracker", fields={"fk_id": self.old_fk.id})
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
     def test_empty_custom_without_id(self, mock_callback):
         self.tracker = self.instance.custom_tracker_without_id
         self.assertChanged()
@@ -611,6 +633,17 @@ class FieldTrackerPostSaveNullableTests(FieldTrackerTestCase):
         self.assertCurrent(fk=self.old_fk.id)
         self.instance.fk = None
         self.instance.save(update_fields=["fk"])
+        self.assertCurrent(fk=None)
+        mock_callback.assert_any_call(name="custom_tracker_without_id", fields={"fk": self.old_fk.id})
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_custom_without_id_update_fields_id(self, mock_callback):
+        self.tracker = self.instance.custom_tracker_without_id
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(fk=self.old_fk.id)
+        self.instance.fk = None
+        self.instance.save(update_fields=["fk_id"])
         self.assertCurrent(fk=None)
         mock_callback.assert_any_call(name="custom_tracker_without_id", fields={"fk": self.old_fk.id})
 
