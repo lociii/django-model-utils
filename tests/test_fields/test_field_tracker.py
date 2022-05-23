@@ -537,7 +537,7 @@ class FieldTrackerForeignKeyTests(FieldTrackerTestCase):
         self.assertPrevious(fk=self.old_fk.id)
         self.assertCurrent(fk=self.instance.fk_id)
 
-    def test_set_null(self):
+    def test_empty_default(self):
         self.tracker = self.instance.tracker
         self.assertChanged()
         self.assertPrevious()
@@ -546,6 +546,28 @@ class FieldTrackerForeignKeyTests(FieldTrackerTestCase):
         self.assertChanged(fk_id=self.old_fk.id)
         self.assertPrevious(fk_id=self.old_fk.id)
         self.assertCurrent(id=self.instance.id, fk_id=None)
+
+    def test_empty_custom(self):
+        self.tracker = self.instance.custom_tracker
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
+        self.instance.fk = None
+        self.assertChanged(fk_id=self.old_fk.id)
+        self.assertPrevious(fk_id=self.old_fk.id)
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+
+    def test_empty_custom_without_id(self):
+        with self.assertNumQueries(1):
+            self.tracked_class.objects.get()
+        self.tracker = self.instance.custom_tracker_without_id
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(fk=self.old_fk.id)
+        self.instance.fk = None
+        self.assertChanged(fk=self.old_fk.id)
+        self.assertPrevious(fk=self.old_fk.id)
+        self.assertCurrent(fk=None)
 
 
 class FieldTrackerTimeStampedTests(FieldTrackerTestCase):
