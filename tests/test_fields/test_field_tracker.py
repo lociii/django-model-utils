@@ -1,4 +1,4 @@
-from unittest import skip
+from unittest import skip, mock
 
 from django.core.cache import cache
 from django.core.exceptions import FieldError
@@ -537,37 +537,81 @@ class FieldTrackerForeignKeyTests(FieldTrackerTestCase):
         self.assertPrevious(fk=self.old_fk.id)
         self.assertCurrent(fk=self.instance.fk_id)
 
-    def test_empty_default(self):
+
+class FieldTrackerPostSaveNullableTests(FieldTrackerTestCase):
+
+    fk_class = Tracked
+    tracked_class = TrackedFKNullable
+
+    def setUp(self):
+        self.old_fk = self.fk_class.objects.create(number=8)
+        self.instance = self.tracked_class.objects.create(fk=self.old_fk)
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_default(self, mock_callback):
         self.tracker = self.instance.tracker
         self.assertChanged()
         self.assertPrevious()
         self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
         self.instance.fk = None
-        self.assertChanged(fk_id=self.old_fk.id)
-        self.assertPrevious(fk_id=self.old_fk.id)
+        self.instance.save()
         self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_called_with(name="default", fields={"fk_id": self.old_fk.id})
 
-    def test_empty_custom(self):
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_default_update_fields(self, mock_callback):
+        self.tracker = self.instance.tracker
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
+        self.instance.fk = None
+        self.instance.save(update_fields=["fk"])
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_called_with(name="default", fields={"fk_id": self.old_fk.id})
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_custom(self, mock_callback):
         self.tracker = self.instance.custom_tracker
         self.assertChanged()
         self.assertPrevious()
-        self.assertCurrent(fk_id=self.old_fk.id)
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
         self.instance.fk = None
-        self.assertChanged(fk_id=self.old_fk.id)
-        self.assertPrevious(fk_id=self.old_fk.id)
-        self.assertCurrent(fk_id=None)
+        self.instance.save()
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_called_with(name="custom_tracker", fields={"fk_id": self.old_fk.id})
 
-    def test_empty_custom_without_id(self):
-        with self.assertNumQueries(1):
-            self.tracked_class.objects.get()
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_custom_update_fields(self, mock_callback):
+        self.tracker = self.instance.custom_tracker
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
+        self.instance.fk = None
+        self.instance.save(update_fields=["fk"])
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_called_with(name="custom_tracker", fields={"fk_id": self.old_fk.id})
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_custom_without_id(self, mock_callback):
         self.tracker = self.instance.custom_tracker_without_id
         self.assertChanged()
         self.assertPrevious()
-        self.assertCurrent(fk=self.old_fk.id)
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
         self.instance.fk = None
-        self.assertChanged(fk=self.old_fk.id)
-        self.assertPrevious(fk=self.old_fk.id)
-        self.assertCurrent(fk=None)
+        self.instance.save()
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_called_with(name="custom_tracker_without_id", fields={"fk_id": self.old_fk.id})
+
+    @mock.patch("tests.models.TrackedFKNullable.callback")
+    def test_empty_custom_without_id_update_fields(self, mock_callback):
+        self.tracker = self.instance.custom_tracker_without_id
+        self.assertChanged()
+        self.assertPrevious()
+        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
+        self.instance.fk = None
+        self.instance.save(update_fields=["fk"])
+        self.assertCurrent(id=self.instance.id, fk_id=None)
+        mock_callback.assert_called_with(name="custom_tracker_without_id", fields={"fk_id": self.old_fk.id})
 
 
 class FieldTrackerTimeStampedTests(FieldTrackerTestCase):

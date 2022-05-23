@@ -2,6 +2,8 @@ import django
 from django.db import models
 from django.db.models import Manager
 from django.db.models.query_utils import DeferredAttribute
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from model_utils import Choices
@@ -254,11 +256,29 @@ class TrackerTimeStamped(TimeStampedModel):
 
 
 class TrackedFK(models.Model):
+    fk = models.ForeignKey('Tracked', on_delete=models.CASCADE)
+
+    tracker = FieldTracker()
+    custom_tracker = FieldTracker(fields=['fk_id'])
+    custom_tracker_without_id = FieldTracker(fields=['fk'])
+
+
+class TrackedFKNullable(models.Model):
     fk = models.ForeignKey('Tracked', on_delete=models.CASCADE, null=True)
 
     tracker = FieldTracker()
     custom_tracker = FieldTracker(fields=['fk_id'])
     custom_tracker_without_id = FieldTracker(fields=['fk'])
+
+    def callback(self, name, fields):
+        pass
+
+
+@receiver(post_save, sender=TrackedFKNullable)
+def tracker_fk_nullable_post_save_receiver(sender, instance=None, **kwargs):
+    instance.callback(name="default", fields=instance.tracker.changed())
+    instance.callback(name="custom_tracker", fields=instance.custom_tracker.changed())
+    instance.callback(name="custom_tracker_without_id", fields=instance.custom_tracker_without_id.changed())
 
 
 class TrackedAbstract(AbstractTracked):
