@@ -20,7 +20,6 @@ from tests.models import (
     TrackedAbstract,
     TrackedFileField,
     TrackedFK,
-    TrackedFKNullable,
     TrackedMultiple,
     TrackedNonFieldAttr,
     TrackedNotDefault,
