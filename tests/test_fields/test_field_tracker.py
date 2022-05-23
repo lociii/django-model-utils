@@ -1,4 +1,4 @@
-from unittest import skip, mock
+from unittest import mock, skip
 
 from django.core.cache import cache
 from django.core.exceptions import FieldError
