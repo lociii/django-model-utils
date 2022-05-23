@@ -551,11 +551,11 @@ class FieldTrackerForeignKeyTests(FieldTrackerTestCase):
         self.tracker = self.instance.custom_tracker
         self.assertChanged()
         self.assertPrevious()
-        self.assertCurrent(id=self.instance.id, fk_id=self.old_fk.id)
+        self.assertCurrent(fk_id=self.old_fk.id)
         self.instance.fk = None
         self.assertChanged(fk_id=self.old_fk.id)
         self.assertPrevious(fk_id=self.old_fk.id)
-        self.assertCurrent(id=self.instance.id, fk_id=None)
+        self.assertCurrent(fk_id=None)
 
     def test_empty_custom_without_id(self):
         with self.assertNumQueries(1):
