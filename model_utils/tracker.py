@@ -263,12 +263,16 @@ class FieldInstanceTracker:
 
         return self.saved_data.get(field)
 
-    def changed(self):
-        """Returns dict of fields that changed since save (with old values)"""
+    def changed(self, exclude: list = None) -> dict:
+        """
+        Returns dict of fields that changed since save (with old values)
+        excluding fields listed in the `exclude` parameter
+        """
+        exclude = exclude or []
         return {
             field: self.previous(field)
             for field in self.fields
-            if self.has_changed(field)
+            if self.has_changed(field) and field not in exclude
         }
 
     def init_deferred_fields(self):

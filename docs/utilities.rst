@@ -203,7 +203,8 @@ will load the previous value from the database to perform the comparison.
 changed
 ~~~~~~~
 Returns a dictionary of all fields that have been changed since the last save
-and the values of the fields during the last save:
+and the values of the fields during the last save omitting fields listed in 
+the exclude parameter:
 
 .. code-block:: pycon
 
@@ -212,6 +213,8 @@ and the values of the fields during the last save:
     >>> a.body = 'First post!'
     >>> a.tracker.changed()
     {'title': 'First Post', 'body': ''}
+    >>> a.tracker.changed(exclude=['title'])
+    {'body': ''}
 
 The ``changed`` method relies on ``has_changed`` to determine which fields
 have changed.
